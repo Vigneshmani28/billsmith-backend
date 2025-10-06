@@ -13,7 +13,19 @@ const userSchema = new mongoose.Schema(
     confirmationTokenExpiry: { type: Date },
     resetPasswordToken: String,
     resetPasswordExpiry: Date,
+    ownerName: { type: String },
+    gstin: { type: String },
+    ownerEmail: { type: String },
+    ownerPhone: { type: String },
+    ownerPan: { type: String },
+    ownerAddress: { type: String },
 
+    bankAccount: {
+      accountNumber: { type: String },
+      holderName: { type: String },
+      ifsc: { type: String },
+      branch: { type: String },
+    },
   },
   { timestamps: true }
 );

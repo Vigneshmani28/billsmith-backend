@@ -29,6 +29,103 @@ exports.loginUser = async (req, res, next) => {
   }
 };
 
+exports.updateOwnerInfo = async (req, res, next) => {
+  const userId = req.user._id;
+  const {
+    ownerName,
+    gstin,
+    ownerEmail,
+    ownerPhone,
+    ownerPan,
+    ownerAddress,
+    accountNumber,
+    holderName,
+    ifsc,
+    branch,
+  } = req.body;
+
+  try {
+    // ✅ Check if user provided any data at all
+    const hasAnyField =
+      ownerName ||
+      gstin ||
+      ownerEmail ||
+      ownerPhone ||
+      ownerPan ||
+      ownerAddress ||
+      accountNumber ||
+      holderName ||
+      ifsc ||
+      branch;
+
+    if (!hasAnyField) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide at least one field to update.",
+      });
+    }
+
+    // ✅ Build update object using dot notation
+    const updateFields = {};
+
+    if (ownerName) updateFields.ownerName = ownerName;
+    if (gstin) updateFields.gstin = gstin;
+    if (ownerEmail) updateFields.ownerEmail = ownerEmail;
+    if (ownerPhone) updateFields.ownerPhone = ownerPhone;
+    if (ownerPan) updateFields.ownerPan = ownerPan;
+    if (ownerAddress) updateFields.ownerAddress = ownerAddress;
+
+    // ✅ For bankAccount fields, use dot-notation so it updates only that field
+    if (accountNumber) updateFields["bankAccount.accountNumber"] = accountNumber;
+    if (holderName) updateFields["bankAccount.holderName"] = holderName;
+    if (ifsc) updateFields["bankAccount.ifsc"] = ifsc;
+    if (branch) updateFields["bankAccount.branch"] = branch;
+
+    // ✅ Update user without overwriting nested object
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true }
+    ).select("-password -resetPasswordToken -resetPasswordExpiry");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User details updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update Owner Info Error:", error);
+    next(error);
+  }
+};
+
+
+exports.getOwnerInfo = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId)
+      .select(
+        "ownerName gstin ownerEmail ownerPhone ownerPan ownerAddress bankAccount"
+      );
+
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({
+      success: true,
+      ownerInfo: user,
+    });
+  } catch (error) {
+    console.error("Get Owner Info Error:", error);
+    next(error);
+  }
+};
+
 exports.registerUser = async (req, res, next) => {
   const { email, username } = req.body;
   try {
