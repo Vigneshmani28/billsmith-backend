@@ -5,11 +5,27 @@ const {mapInvoice} = require('../utils/mapInvoice');
 // ---------------- CREATE INVOICE ----------------
 exports.createInvoice = async (req, res, next) => {
   try {
-    let invoice = new Invoice({ ...req.body, user_id: req.user.id });
+    // Extract invoice data from request body
+    let invoiceData = { ...req.body, user_id: req.user.id };
 
-    // Recalculate amounts
+    // 🧮 Compute inter-state status
+    const fromGstin = invoiceData.from_gstin || "";
+    const toGstin = invoiceData.to_gstin || "";
+
+    const isInterState =
+      fromGstin.length >= 2 && toGstin.length >= 2
+        ? fromGstin.substring(0, 2) !== toGstin.substring(0, 2)
+        : false;
+
+    invoiceData.is_inter_state = isInterState;
+
+    // Create Invoice Object
+    let invoice = new Invoice(invoiceData);
+
+    // Recalculate amounts (assuming you have a recalc function)
     invoice = recalc(invoice);
 
+    // Save Invoice
     await invoice.save();
 
     res.status(201).json({ success: true, data: invoice });
@@ -18,33 +34,54 @@ exports.createInvoice = async (req, res, next) => {
   }
 };
 
+
 // ---------------- PUT FULL INVOICE ----------------
 exports.putInvoice = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Replace entire document with new data
-    const invoice = await Invoice.findByIdAndUpdate(
+    // Extract data from frontend
+    let invoiceData = { ...req.body };
+
+    // 🧮 Compute inter-state status
+    const fromGstin = invoiceData.from_gstin || "";
+    const toGstin = invoiceData.to_gstin || "";
+
+    const isInterState =
+      fromGstin.length >= 2 && toGstin.length >= 2
+        ? fromGstin.substring(0, 2) !== toGstin.substring(0, 2)
+        : false;
+
+    invoiceData.is_inter_state = isInterState;
+
+    // 📝 Update the invoice with new data
+    let invoice = await Invoice.findByIdAndUpdate(
       id,
-      { ...req.body },   // take everything from frontend
-      { new: true, runValidators: true } // return updated doc, validate schema
+      invoiceData,
+      { new: true, runValidators: true }
     );
 
     if (!invoice) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Invoice not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found",
+      });
     }
 
-    // Recalculate totals after update
-    recalc(invoice);
+    // 🔄 Recalculate totals after update
+    invoice = recalc(invoice);
     await invoice.save();
 
-    res.json({ success: true, message: "Invoice updated", invoice });
+    res.json({
+      success: true,
+      message: "Invoice updated successfully",
+      data: invoice,
+    });
   } catch (error) {
     next(error);
   }
 };
+
 
 
 // ---------------- PATCH FULL INVOICE ----------------
@@ -187,7 +224,6 @@ exports.getUserInvoices = async (req, res, next) => {
   try {
     const invoices = await Invoice.find({ user_id: req.user._id })
       .sort({ created_at: -1 })
-      .select('invoice_number total status date to_name to_email public_id')
       .lean();
 
     const mappedInvoices = invoices.map((inv) => ({
