@@ -1,12 +1,11 @@
 require("dotenv").config();
 const app = require("./app");
-const connectDB = require("./config/db");
 
-if (process.env.NODE_ENV !== "production") {
+// For local development
+if (process.env.NODE_ENV === "development") {
   const PORT = process.env.PORT || 5000;
-  connectDB();
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-} else {
-  connectDB();
-  module.exports = app;
 }
+
+// Export app for Vercel serverless functions
+module.exports = app;

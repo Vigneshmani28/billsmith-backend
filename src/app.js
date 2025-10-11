@@ -3,8 +3,12 @@ const cors = require('cors');
 const errorHandler = require('./middlewares/errorHandler');
 const userRoute = require('./routes/userRoute');
 const invoiceRoute = require('./routes/invoiceRoute');
+const connectDB = require('./config/db');
 
 const app = express();
+
+// Connect to database
+connectDB();
 
 app.use(express.json());
 app.use(cors({
