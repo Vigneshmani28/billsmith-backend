@@ -12,7 +12,7 @@ connectDB();
 
 app.use(express.json());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://172.31.1.43:3000', 'https://billsmith.vercel.app/'],
+  origin: ['http://localhost:3000', 'http://172.31.1.43:3000', 'https://billsmith.vercel.app'],
   credentials: true
 }));
 
