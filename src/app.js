@@ -15,6 +15,10 @@ app.use(cors({
 app.use("/api/user", userRoute);
 app.use("/api/invoices", invoiceRoute);
 
+app.get("/", (req, res) => {
+  res.send("Hello from Node API Server Updated");
+});
+
 app.use(errorHandler);
 
 module.exports = app;
