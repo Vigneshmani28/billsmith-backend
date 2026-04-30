@@ -7,13 +7,13 @@ dotenv.config();
 
 const seedUser = async () => {
   try {
-    connectDB();
+    await connectDB();
 
-    const hashedPassword = await bcrypt.hash("admin", 10);
+    const hashedPassword = await bcrypt.hash("Vicky2828@", 10);
     const user = await User.create({
-      username: "admin",
-      email: "admin@gmail.com",
-      name : "Admin",
+      username: "vicky",
+      email: "mrtnvicky2020@gmail.com",
+      name: "Vignesh M",
       password: hashedPassword,
     });
 

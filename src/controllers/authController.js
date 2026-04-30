@@ -13,17 +13,17 @@ exports.loginUser = async (req, res, next) => {
   const { email, username, password } = req.body;
   try {
     const user = await User.findOne({ $or: [{ email }, { username }] });
-    if(!user)  return res.status(400).json({success:false, message: "Invalid Email or Password"});
-    if(!user.password)  return res.status(400).json({success:false, message: "Invalid Email or Password"});
+    if (!user) return res.status(400).json({ success: false, message: "Invalid Email or Password" });
+    if (!user.password) return res.status(400).json({ success: false, message: "Invalid Email or Password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if(!isMatch) return res.status(400).json({success:false, message: "Invalid Email or Password"});
+    if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Email or Password" });
 
     const token = generateToken(user)
-    const { _id, username: uname, email: uemail, name : uName, isConfirmed: uisConfirmed } = user;
+    const { _id, username: uname, email: uemail, name: uName, isConfirmed: uisConfirmed } = user;
 
-    res.status(200).json({success:true, user: { _id, username: uname, email: uemail, name : uName, isConfirmed: uisConfirmed }, token})
-    
+    res.status(200).json({ success: true, user: { _id, username: uname, email: uemail, name: uName, isConfirmed: uisConfirmed }, token })
+
   } catch (error) {
     next(error)
   }
@@ -130,24 +130,24 @@ exports.registerUser = async (req, res, next) => {
   const { email, username } = req.body;
   try {
 
-  const existing = await User.findOne({ $or: [{ email }, { username }] });
-  if (existing) return res.status(400).json({ message: "Email or username already exists" });
+    const existing = await User.findOne({ $or: [{ email }, { username }] });
+    if (existing) return res.status(400).json({ message: "Email or username already exists" });
 
-  const token = crypto.randomBytes(32).toString("hex");
+    const token = crypto.randomBytes(32).toString("hex");
 
-  const user = new User({
-    email,
-    username,
-    confirmationToken: token,
-    confirmationTokenExpiry: Date.now() + 24 * 60 * 60 * 1000, // 24h
-  });
+    const user = new User({
+      email,
+      username,
+      confirmationToken: token,
+      confirmationTokenExpiry: Date.now() + 24 * 60 * 60 * 1000, // 24h
+    });
 
-  await user.save();
+    await user.save();
 
-  const confirmUrl = `http://localhost:3000/register/confirm/${token}`;
-  // await sendEmail(email, "Complete Registration", `Click to complete registration: ${confirmUrl}`);
+    const confirmUrl = `http://localhost:3000/register/confirm/${token}`;
+    // await sendEmail(email, "Complete Registration", `Click to complete registration: ${confirmUrl}`);
 
-  res.status(200).json({ message: "Confirmation email sent", url: confirmUrl });
+    res.status(200).json({ message: "Confirmation email sent", url: confirmUrl });
   } catch (error) {
     next(error)
   }
@@ -158,28 +158,28 @@ exports.confirmRegistration = async (req, res, next) => {
 
   try {
     if (!name) {
-      return res.status(400).json({success:false, message: "Name is required" });
+      return res.status(400).json({ success: false, message: "Name is required" });
     }
-    
+
     if (password !== confirmPassword)
-    return res.status(400).json({success:false, message: "Passwords do not match" });
+      return res.status(400).json({ success: false, message: "Passwords do not match" });
 
-  const user = await User.findOne({
-    confirmationToken: token,
-    confirmationTokenExpiry: { $gt: Date.now() },
-  });
+    const user = await User.findOne({
+      confirmationToken: token,
+      confirmationTokenExpiry: { $gt: Date.now() },
+    });
 
-  if (!user) return res.status(400).json({success:false, message: "Invalid or expired token" });
+    if (!user) return res.status(400).json({ success: false, message: "Invalid or expired token" });
 
-  user.password = await bcrypt.hash(password, 10);
-  user.name = name;
-  user.isConfirmed = true;
-  user.confirmationToken = undefined;
-  user.confirmationTokenExpiry = undefined;
+    user.password = await bcrypt.hash(password, 10);
+    user.name = name;
+    user.isConfirmed = true;
+    user.confirmationToken = undefined;
+    user.confirmationTokenExpiry = undefined;
 
-  await user.save();
+    await user.save();
 
-  res.status(200).json({success:true, message: "Registration complete. You can now login." });
+    res.status(200).json({ success: true, message: "Registration complete. You can now login." });
   } catch (error) {
     next(error)
   }
@@ -202,7 +202,7 @@ exports.forgotPassword = async (req, res, next) => {
     user.resetPasswordExpiry = Date.now() + 15 * 60 * 1000; // 15 min expiry
     await user.save();
 
-    const resetUrl = `http://localhost:3000/reset-password?token=${token}`;
+    const resetUrl = `https://billsmith.vercel.app/reset-password?token=${token}`;
 
     console.log(resetUrl)
 
